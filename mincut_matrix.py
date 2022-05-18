@@ -29,9 +29,6 @@ class Graph:
 
 			self.weighted_degree[vertex] = sum
 
-	def cumulative_weights(self):
-		
-
 	def get_graph(self):
 		for i in range(self.num_vertices+1):
 			for j in range(self.num_vertices+1):
@@ -41,27 +38,98 @@ class Graph:
 		print(self.weighted_degree)
 
 
-# function used to pick the random edge that we will contract
-def random_select(g):
-	print('stuff')
-	#cumulative_weights = 
-#	r = random.choice(range(0, cumulative_weights[-1]))
+def upper_bound(arr, N, X):
+    # Initialise starting index and ending index
+	mid = 0
+	low = 0
+	high = N
+ 
+	# Till low is less than high
+	while low < high:
+		# Find the middle index
+		mid = low + (high - low) // 2
+		# If X is greater than or equal to arr[mid] then find in right subarray
+		if X >= arr[mid]:
+			low = mid + 1
+		# If X is less than arr[mid] then find in left subarray
+		else:
+			high = mid
+		
+	# if X is greater than arr[n-1]
+	if low < N and arr[low] <= X:
+		low = low + 1
+ 
+	# Return the upper_bound index
+	return low
 
 
-def edge_select(matrix, weighted_degree):
-	print('foo')
+def binary_search(search_list, low, high, x):
+	i = upper_bound(search_list, len(search_list), x)
+	if search_list[i - 1] <= x and x < search_list[i]:
+		return i
 
 
-def contract_edge(u, v):
-	print('foo')
+# function used to pick an edge proportionally to its weight
+def random_select(cumulative_weights):
+	r = random.choice(range(0, cumulative_weights[-1]))
+	bound = binary_search(cumulative_weights, 0, len(cumulative_weights), r)
+	return bound
+
+
+# function that selects the starting edge (u,v) for the contraption procedure
+def edge_select(g):
+	# choose the vertex u proportional to the weighted degree with a call to random_select
+	# build the weighted degree of the graph
+	g.build_weighted_degree()
+	#g.get_weighted_degree()
+	cumulative_weights_D = []
+	sum = 0
+	# create the cumulate weights we will use in random select
+	for i in range(len(g.weighted_degree)):
+		sum = sum + g.weighted_degree[i]
+		cumulative_weights_D.append(sum)
+
+	u = random_select(cumulative_weights_D)
+	# choose vertex v proportional to the weighted matrix with a call to random_select
+	cumulative_weights_W = []
+	sum = 0
+	# create the cumulative weights for the matrix we will use in random select
+	for vertex in range(g.num_vertices+1):
+		sum = sum + g.w_adjacency_matrix[u][vertex]
+		cumulative_weights_W.append(sum)
+
+	v = random_select(cumulative_weights_W)
+	return [u,v]
+
+
+def contract_edge(g, u, v):
+	g.weighted_degree[u] = g.weighted_degree[u] + g.weighted_degree[v] - (2*g.w_adjacency_matrix[u][v])
+	g.weighted_degree[v] = 0
+	g.w_adjacency_matrix[v][u] = 0
+	g.w_adjacency_matrix[u][v] = 0
+	for w in range(g.num_vertices+1):
+		if w != u and w != v:
+			g.w_adjacency_matrix[u][w] = g.w_adjacency_matrix[u][w] + g.w_adjacency_matrix[v][w]
+			g.w_adjacency_matrix[w][u] = g.w_adjacency_matrix[w][u] + g.w_adjacency_matrix[w][v]
+			g.w_adjacency_matrix[v][w] = 0
+			g.w_adjacency_matrix[w][v] = 0
 
 
 def contract(g, k):
-	print('foo')
+	n = g.num_vertices
+	for i in range(1, n - k):
+		[u,v] = edge_select(g)
+		print('edge we about to contract: ', u, '-', v)
+		contract_edge(g, u, v)
+	return g
 
 
 def recursive_contract(g):
-	print('foo')
+	n = g.num_vertices
+	print(n)
+	if n <= 6:
+		new_g = contract(g, 2)
+		new_g.get_graph()
 
 
 if __name__ == '__main__':
@@ -84,6 +152,7 @@ if __name__ == '__main__':
 			graph_sizes.append(g.num_vertices)
 			#g.get_graph()
 			#g.get_weighted_degree()
-			random_select(g)
-
+			#g.get_graph()
+			recursive_contract(g)
+			#g.get_graph()
 
