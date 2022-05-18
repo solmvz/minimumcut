@@ -132,7 +132,7 @@ def contract(g, k):
 	n = g.get_num_vertices()
 	for i in range(0, n - k):
 		[u,v] = edge_select(g)
-		print('edge we about to contract: ', u, '-', v)
+		# print('edge we about to contract: ', u, '-', v)
 		contract_edge(g, u, v)
 
 	return g
@@ -142,7 +142,7 @@ def recursive_contract(g):
 	n = g.get_num_vertices()
 	if n <= 6:
 		new_g = contract(g, 2)
-		new_g.get_graph()
+		# new_g.get_graph()
 		for i in range(g.num_vertices+1):
 			for j in range(g.num_vertices+1):
 				if new_g.w_adjacency_matrix[i][j] != 0:
@@ -158,6 +158,16 @@ def recursive_contract(g):
 		compare_weights.append(recursive_contract(compare_graphs[i-1]))
 
 	return min(compare_weights)
+
+
+def karger(g, k):
+	minimum = 999999999
+	for i in range(1, k):
+		t = recursive_contract(g)
+		if t < minimum:
+			minimum = t
+
+	return minimum 
 
 
 if __name__ == '__main__':
@@ -178,5 +188,6 @@ if __name__ == '__main__':
 			g.add_edges(edges)
 			f.close()
 			graph_sizes.append(g.num_vertices)
-			result = recursive_contract(g)
+			k = round(math.log(g.num_vertices,2))
+			result = karger(g, k)
 			print(result)
