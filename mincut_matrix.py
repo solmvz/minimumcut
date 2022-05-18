@@ -29,6 +29,18 @@ class Graph:
 
 			self.weighted_degree[vertex] = sum
 
+	def get_num_vertices(self):
+		verticies = []
+		for vertex in range(self.num_vertices+1):
+			for v in range(self.num_vertices+1):
+				if self.w_adjacency_matrix[vertex][v] != 0:
+					if vertex not in verticies:
+						verticies.append(vertex)
+					if v not in verticies:
+						verticies.append(v)
+
+		return len(verticies)
+
 	def get_graph(self):
 		for i in range(self.num_vertices+1):
 			for j in range(self.num_vertices+1):
@@ -117,20 +129,27 @@ def contract_edge(g, u, v):
 
 
 def contract(g, k):
-	n = g.num_vertices
+	n = g.get_num_vertices()
+	print(n)
 	for i in range(0, n - k):
 		[u,v] = edge_select(g)
 		print('edge we about to contract: ', u, '-', v)
 		contract_edge(g, u, v)
+
 	return g
 
 
 def recursive_contract(g):
-	n = g.num_vertices
-	g.get_graph()
+	n = g.get_num_vertices()
+	print(n)
+	#g.get_graph()
 	if n <= 6:
+		#print('-----------------------------------Im in---------------------------------------')
 		new_g = contract(g, 2)
-		new_g.get_graph()
+		for i in range(n):
+			for j in range(n):
+				if new_g.w_adjacency_matrix[i][j] != 0:
+					return new_g.w_adjacency_matrix[i][j]
 
 	t = math.ceil((n / math.sqrt(2)) + 1)
 
@@ -138,6 +157,7 @@ def recursive_contract(g):
 	compare_weights = [] 
 
 	for i in range(1, 2):
+		#print('AO STO QUA')
 		compare_graphs.append(contract(g, t))
 		compare_weights.append(recursive_contract(compare_graphs[i-1]))
 
@@ -162,9 +182,5 @@ if __name__ == '__main__':
 			g.add_edges(edges)
 			f.close()
 			graph_sizes.append(g.num_vertices)
-			#g.get_graph()
-			#g.get_weighted_degree()
-			#g.get_graph()
-			recursive_contract(g)
-			#g.get_graph()
-
+			result = recursive_contract(g)
+			print(result)
