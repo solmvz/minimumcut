@@ -32,7 +32,8 @@ class Graph:
 	def get_graph(self):
 		for i in range(self.num_vertices+1):
 			for j in range(self.num_vertices+1):
-				print(i, ' ', j, ' -> ', self.w_adjacency_matrix[i][j])
+				if self.w_adjacency_matrix[i][j] != 0:
+					print(i, ' ', j, ' -> ', self.w_adjacency_matrix[i][j])
 
 	def get_weighted_degree(self):
 		print(self.weighted_degree)
@@ -117,7 +118,7 @@ def contract_edge(g, u, v):
 
 def contract(g, k):
 	n = g.num_vertices
-	for i in range(1, n - k):
+	for i in range(0, n - k):
 		[u,v] = edge_select(g)
 		print('edge we about to contract: ', u, '-', v)
 		contract_edge(g, u, v)
@@ -126,10 +127,21 @@ def contract(g, k):
 
 def recursive_contract(g):
 	n = g.num_vertices
-	print(n)
+	g.get_graph()
 	if n <= 6:
 		new_g = contract(g, 2)
 		new_g.get_graph()
+
+	t = math.ceil((n / math.sqrt(2)) + 1)
+
+	compare_graphs = []
+	compare_weights = [] 
+
+	for i in range(1, 2):
+		compare_graphs.append(contract(g, t))
+		compare_weights.append(recursive_contract(compare_graphs[i-1]))
+
+	return min(compare_weights)
 
 
 if __name__ == '__main__':
