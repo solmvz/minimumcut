@@ -130,7 +130,6 @@ def contract_edge(g, u, v):
 
 def contract(g, k):
 	n = g.get_num_vertices()
-	print(n)
 	for i in range(0, n - k):
 		[u,v] = edge_select(g)
 		print('edge we about to contract: ', u, '-', v)
@@ -141,13 +140,11 @@ def contract(g, k):
 
 def recursive_contract(g):
 	n = g.get_num_vertices()
-	print(n)
-	#g.get_graph()
 	if n <= 6:
-		#print('-----------------------------------Im in---------------------------------------')
 		new_g = contract(g, 2)
-		for i in range(n):
-			for j in range(n):
+		new_g.get_graph()
+		for i in range(g.num_vertices+1):
+			for j in range(g.num_vertices+1):
 				if new_g.w_adjacency_matrix[i][j] != 0:
 					return new_g.w_adjacency_matrix[i][j]
 
@@ -157,7 +154,6 @@ def recursive_contract(g):
 	compare_weights = [] 
 
 	for i in range(1, 2):
-		#print('AO STO QUA')
 		compare_graphs.append(contract(g, t))
 		compare_weights.append(recursive_contract(compare_graphs[i-1]))
 
