@@ -194,42 +194,42 @@ def measure_run_times(g, num_calls, num_instances, k):
 
 if __name__ == '__main__':
 
-	dir_name = 'dataset'
-	num_calls = 1
-	num_instances = 1
-	graph_sizes = []
-	run_times = []
+    dir_name = 'dataset'
+    num_calls = 1
+    num_instances = 1
+    graph_sizes = []
+    run_times = []
 
-	f_results = open('results/karger_cuts.txt', 'w+')
-	f_results.write('File\tSize of Cut\n')
+    f_results = open('results/karger_cuts.txt', 'w+')
+    f_results.write('File\tSize of Cut\n')
 
     directory = os.fsencode(dir_name)
     for file in sorted(os.listdir(directory)):
         filename = os.fsdecode(file)
 
-		if(filename.endswith('.txt')):
-			print('processing ', filename)
-			f = open(dir_name + '/' + filename)
+        if(filename.endswith('.txt')):
+            print('processing ', filename)
+            f = open(dir_name + '/' + filename)
 
-			line = f.readline().split()
-			g = Graph(int(line[0]), int(line[1]))
+            line = f.readline().split()
+            g = Graph(int(line[0]), int(line[1]))
 
-			edges = f.read().splitlines()
-			g.add_edges(edges)
+            edges = f.read().splitlines()
+            g.add_edges(edges)
 
-			f.close()
+            f.close()
 
-			graph_sizes.append(g.num_vertices)
-			k = (g.num_vertices ** 2) * round(math.log(g.num_vertices,2))
-			
-			[avg_time, result] = measure_run_times(g, num_calls, num_instances, k)
+            graph_sizes.append(g.num_vertices)
+            k = (g.num_vertices ** 2) * round(math.log(g.num_vertices,2))
 
-			run_times.append(avg_time)
-			f_results.write(filename + '\t' + str(result) + '\n')
+            [avg_time, result] = measure_run_times(g, num_calls, num_instances, k)
 
-	f_results.close()
-	with open('results/karger_stein_results.txt', 'w+') as f:
-		f.write("Sizes\tTimes\n")
-		for i in range(len(graph_sizes)):
-			f.write("%s\t%s\n" % (graph_sizes[i], run_times[i]))
+            run_times.append(avg_time)
+            f_results.write(filename + '\t' + str(result) + '\n')
+
+    f_results.close()
+    with open('results/karger_stein_results.txt', 'w+') as f:
+        f.write("Sizes\tTimes\n")
+        for i in range(len(graph_sizes)):
+            f.write("%s\t%s\n" % (graph_sizes[i], run_times[i]))
 
