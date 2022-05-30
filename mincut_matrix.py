@@ -159,7 +159,7 @@ def recursive_contract(g):
     return min(compare_weights)
 
 
-def karger(g, k):
+def karger_stein(g, k):
     a = g.num_edges + 1
     step = 1
     c = 0
@@ -232,4 +232,3 @@ if __name__ == '__main__':
         f.write("Sizes\tTimes\n")
         for i in range(len(graph_sizes)):
             f.write("%s\t%s\n" % (graph_sizes[i], run_times[i]))
-

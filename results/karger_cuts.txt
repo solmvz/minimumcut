@@ -1,9 +1,1 @@
 File	Size of Cut
-input_random_01_10.txt	8580
-input_random_02_10.txt	223
-input_random_03_10.txt	2302
-input_random_04_10.txt	5250
-input_random_05_20.txt	1713
-input_random_06_20.txt	3786
-input_random_07_20.txt	936
-input_random_08_20.txt	6510
