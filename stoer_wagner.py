@@ -1,205 +1,226 @@
 import os
-
-
-class Vertex:
-    def __init__(self, name):
-        self.Name = str(name)
-        self.Value = 0
-        self.AdjList = []
+import copy
 
 
 class Graph:
     def __init__(self, n_ver, n_edges, edge_list):
         self.num_vertices = n_ver
         self.num_edges = n_edges
-        self.vertices = []
+        self.vertices = {}
         self.edges = {}
         for v in range(1, n_ver + 1):
-            new_vertex = Vertex(name=v)
-            self.vertices.append(new_vertex)
+            # new_vertex = Vertex(name=v)
+            # self.vertices.append(new_vertex)
+            self.vertices[str(v)] = (0, [])
         for vertex in self.vertices:
             for e in edge_list:
                 edge = e.split()
-                if edge[0] == str(vertex.Name):
-                    adjVertex = self.findVertex(edge[1])
-                    vertex.AdjList.append(adjVertex)
-                if edge[1] == str(vertex.Name):
-                    adjVertex = self.findVertex(edge[0])
-                    vertex.AdjList.append(adjVertex)
+                if edge[0] == str(vertex):
+                    # adjVertex = self.findVertex(edge[1])
+                    # vertex.AdjList.append(adjVertex)
+                    self.vertices[vertex][1].append(str(edge[1]))
+                elif edge[1] == str(vertex):
+                    # adjVertex = self.findVertex(edge[0])
+                    # vertex.AdjList.append(adjVertex)
+                    self.vertices[vertex][1].append(str(edge[0]))
 
         for e in edge_list:
             edge = e.split()
-            edge_key = (self.findVertex(edge[0]), self.findVertex(edge[1]))
-            edge_weight = int(edge[2])
-            if edge_key in self.edges.keys():
-                self.edges[edge_key] += edge_weight
-            else:
-                self.edges[edge_key] = edge_weight
+            # edge_key1 = (self.findVertex(edge[0]), self.findVertex(edge[1]))
+            edge_key1 = (edge[0], edge[1])
 
-    def findVertex(self, Name):
-        for i in self.vertices:
-            if str(i.Name) == str(Name):
-                return i
-        return
+            edge_weight = int(edge[2])
+            if edge_key1 in self.edges.keys():
+                self.edges[edge_key1] += edge_weight
+            else:
+                self.edges[edge_key1] = edge_weight
+
+            # edge_key2 = (self.findVertex(edge[1]), self.findVertex(edge[0]))
+            edge_key2 = (edge[1], edge[0])
+            edge_weight = int(edge[2])
+            if edge_key2 in self.edges.keys():
+                self.edges[edge_key2] += edge_weight
+            else:
+                self.edges[edge_key2] = edge_weight
 
     def contract(self, u, v):
-        newVertex = Vertex(name=str(u) + '-' + str(v))
-        newVertexAdj = u.AdjList + v.AdjList
-        newVertex.AdjList.append(newVertexAdj)
+        newVertex = str(u) + '-' + str(v)
 
-        for i in u.AdjList:
-            edge_key = (newVertex, i)
-            edge_weight = self.edges[(u, i)]
-            if edge_key in self.edges.keys():
-                self.edges[edge_key] += edge_weight
+        if (u, v) in self.edges.keys():
+            del self.edges[u, v]
+            self.vertices[u][1].remove(v)
+            self.vertices[v][1].remove(u)
+
+        newVertexAdjList = self.vertices[u][1] + self.vertices[v][1]
+        temp_ls1 = list(self.vertices[u])
+        temp_ls1[1] = list(set(self.vertices[u][1]))
+        self.vertices[u] = tuple(temp_ls1)
+        temp_ls2 = list(self.vertices[v])
+        temp_ls1[1] = list(set(self.vertices[v][1]))
+        self.vertices[v] = tuple(temp_ls2)
+
+        for i in self.vertices[u][1]:
+            self.vertices[i][1].remove(u)
+            edge_key1 = (newVertex, i)
+            edge_key2 = (i, newVertex)
+            edge_weight = self.edges[u, i]
+            if edge_key1 in self.edges.keys():
+                self.edges[edge_key1] += edge_weight
+                self.edges[edge_key2] += edge_weight
             else:
-                self.edges[edge_key] = edge_weight
-            del self.edges[edge_key]
+                self.vertices[i][1].append(newVertex)
+                self.edges[edge_key1] = edge_weight
+                self.edges[edge_key2] = edge_weight
+            del self.edges[u, i]
+            del self.edges[i, u]
 
-        for j in v.AdjList:
-            edge_key = (newVertex, j)
-            edge_weight = self.edges[(v, j)]
-            if edge_key in self.edges.keys():
-                self.edges[edge_key] += edge_weight
+        for j in self.vertices[v][1]:
+            self.vertices[j][1].remove(v)
+            edge_key1 = (newVertex, j)
+            edge_key2 = (j, newVertex)
+            edge_weight = self.edges[v, j]
+            if edge_key1 in self.edges.keys():
+                self.edges[edge_key1] += edge_weight
+                self.edges[edge_key2] += edge_weight
             else:
-                self.edges[edge_key] = edge_weight
-            del self.edges[edge_key]
-
-        self.vertices.remove(u)
-        self.vertices.remove(v)
+                self.vertices[j][1].append(newVertex)
+                self.edges[edge_key1] = edge_weight
+                self.edges[edge_key2] = edge_weight
+            del self.edges[v, j]
+            del self.edges[j, v]
+        self.num_vertices -= 1
+        self.vertices[newVertex] = (0, list(set(newVertexAdjList)))
+        del self.vertices[u]
+        del self.vertices[v]
 
     def printGraph(self):
-        print("================ VERTICES ==================")
-        for v in self.vertices:
-            print("Vertex: ", v.Name)
-            print("Adj list")
-            for a in set(v.AdjList):
-                print(a.Name)
-            print("------------------------------------------")
-
-        for e in self.edges:
-            print("EDGE: ")
-            for i in e:
-                print(i.Name)
-            print("WEIGHT: ", self.edges[e])
+        print(self.vertices)
+        print(self.edges)
 
 
 class maxHeap:
 
     # Constructor to initialize a heap
     def __init__(self):
-        self.Heap = []
+        self.Heap = {}
         self.Size = 0
-        self.valueToIndex = {}
+        self.keyToIndex = {}
 
-    def extractHeapify(self, idx):
+    def extractHeapify(self, index):
         # Update Heap to keep maximum at root
-        largest = idx
-        left = 2 * idx + 1
-        right = 2 * idx + 2
+        largest = index
+        left = 2 * index + 1
+        right = 2 * index + 2
         # if the child is lareger than parent, change indexes
-        if left < len(self.Heap) and self.Heap[left].Value > self.Heap[largest].Value:
+        if left < len(self.Heap) and self.Heap[left][1] > self.Heap[largest][1]:
             largest = left
-        if right < len(self.Heap) and self.Heap[right].Value < self.Heap[largest].Value:
+        if right < len(self.Heap) and self.Heap[right][1] < self.Heap[largest][1]:
             largest = right
         # if the  index has chnaged swap nodes and heapify again
-        if largest != idx:
-            self.Heap[idx], self.Heap[largest] = self.Heap[largest], self.Heap[idx]
-            self.valueToIndex[self.Heap[largest]] = largest
-            self.valueToIndex[self.Heap[idx]] = idx
+        if largest != index:
+            self.Heap[index], self.Heap[largest] = self.Heap[largest], self.Heap[index]
+            self.keyToIndex[self.Heap[largest][0]] = largest
+            self.keyToIndex[self.Heap[index][0]] = index
             self.extractHeapify(largest)
 
     def extractMax(self):
         # Extract the maximum value (in root)
         if self.isEmpty():
             return
-        root = self.Heap[0]
+        root_key = self.Heap[0][0]
+        root_value = self.Heap[0][1]
         # Substitite the root with last element
         self.Heap[0] = self.Heap[len(self.Heap) - 1]
-        self.valueToIndex[self.Heap[0]] = 0
-        self.Heap.pop()
-        self.valueToIndex[root] = None
+        self.keyToIndex[self.Heap[0][0]] = 0
+        # del self.Heap[len(self.Heap) - 1]
+        del self.keyToIndex[root_key]
+        del self.Heap[len(self.Heap) - 1]
         # Update heap
         self.extractHeapify(0)
 
-        return root
+        return root_key
 
-    def insertHeapify(self, idx):
+    def insertHeapify(self, index):
         # update heap after insert
-        parent = int(((idx - 1) / 2))
+        parent = int(((index - 1) / 2))
         # check if the inserted element is larger than its parent
-        if self.Heap[idx].Value > self.Heap[parent].Value:
-            self.Heap[idx], self.Heap[parent] = self.Heap[parent], self.Heap[idx]
-            self.valueToIndex[self.Heap[parent]] = parent
-            self.valueToIndex[self.Heap[idx]] = idx
+        if self.Heap[index][1] > self.Heap[parent][1]:
+            self.Heap[index], self.Heap[parent] = self.Heap[parent], self.Heap[index]
+            self.keyToIndex[self.Heap[parent][0]] = parent
+            self.keyToIndex[self.Heap[index][0]] = index
             self.insertHeapify(parent)
 
-    def insert(self, v):
+    def insert(self, key, value):
         # insert node at the end of heap
-        self.Heap.append(v)
-        self.valueToIndex[v] = len(self.Heap) - 1
-        self.insertHeapify(self.valueToIndex[v])
+        # self.Heap.append(v)
+        # print(key, value)
+        index = len(self.Heap)
+        self.Heap[index] = (str(key), int(value))
+        self.keyToIndex[str(key)] = str(index)
+        self.insertHeapify(index)
         return
 
-    def increaseKey(self, v):
-        idx = self.valueToIndex[v]
-        parent = int(((idx - 1) / 2))
-        if self.Heap[idx].Value > self.Heap[parent].Value:
-            self.Heap[idx], self.Heap[parent] = self.Heap[parent], self.Heap[idx]
-            self.valueToIndex[self.Heap[parent]] = parent
-            self.valueToIndex[self.Heap[idx]] = idx
+    def increaseKey(self, key):
+        index = int(self.keyToIndex[key])
+        parent = int(((index - 1) / 2))
+        if self.Heap[index] > self.Heap[parent]:
+            self.Heap[index], self.Heap[parent] = self.Heap[parent], self.Heap[index]
+            self.keyToIndex[self.Heap[parent][0]] = parent
+            self.keyToIndex[self.Heap[index][0]] = index
             self.insertHeapify(parent)
 
     def isEmpty(self):
         return len(self.Heap) == 0
 
-    def isInMaxHeap(self, v):
-        return self.valueToIndex[v] is not None
+    def isInMaxHeap(self, k):
+        if k in self.keyToIndex.keys():
+            return True
+        return False
 
     def print_Heap(self):
         print("HEAP: ")
-        for i in self.Heap:
-            print("Name: ", i.Name, ", Value: ", i.Value)
+        print(self.Heap)
+        print(self.keyToIndex)
 
 
 def stMinCut(G):
     Q = maxHeap()
-    for ver in G.vertices:
-        Q.insert(ver)
-    V = G.vertices
-    s = None
-    t = None
+    for key in G.vertices:
+        Q.insert(key, G.vertices[key][0])
+    s = 'null'
+    t = 'null'
     while not Q.isEmpty():
         u = Q.extractMax()
         s = t
         t = u
-        for v in u.AdjList:
+        for v in G.vertices[u][1]:
             if Q.isInMaxHeap(v):
-                v.Value += G.edges[(v, u)]
+                new_value = list(G.vertices[v])
+                new_value[0] += G.edges[u, v]
+                G.vertices[v] = tuple(new_value)
                 Q.increaseKey(v)
-    V.remove(t)
-    minCut = [[], []]
+
     minCut_weight = 0
-    for i in V:
-        current_edge = i.Name + ' ' + t.Name
-        if current_edge in G.edges.keys():
-            minCut[0].append(current_edge)
-            minCut_weight += G.get_weight(i, t)
-    minCut[1].append(minCut_weight)
-    return minCut, s, t
+    for n in G.vertices[t][1]:
+        minCut_weight += G.edges[t, n]
+    return G, minCut_weight, s, t
 
 
 def GlobalMinCut(G):
-    if len(G.vertices) == 2:
-        return G.vertices
+    if G.num_vertices == 2:
+        solution = []
+        for i in G.vertices:
+            solution.append(i)
+        solutionWeight = G.edges[solution[0], solution[1]]
+        return G, solutionWeight
     else:
-        C1, s, t = stMinCut(G)
+        C1, C1_weight, s, t = stMinCut(G)
         G.contract(s, t)
-        C2 = GlobalMinCut(G)
-        if C1[1][0] <= C2[1][0]:
-            return C1
+        C2, C2_weight = GlobalMinCut(G)
+        if C1_weight <= C2_weight:
+            return C1, C1_weight
         else:
-            return C2
+            return C2, C2_weight
 
 
 if __name__ == '__main__':
@@ -217,7 +238,7 @@ if __name__ == '__main__':
     for file in sorted(os.listdir(directory)):
         filename = os.fsdecode(file)
 
-        if (filename.endswith('.txt')):
+        if filename.endswith('.txt'):
             print('processing ', filename)
             f = open(dir_name + '/' + filename)
 
@@ -226,8 +247,9 @@ if __name__ == '__main__':
             g = Graph(int(line[0]), int(line[1]), edges)
             # g.printGraph()
             # g.add_edges(edges)
-            minCut = GlobalMinCut(g)
-            print(minCut)
+
+            minCut, minCutWeight = GlobalMinCut(g)
+            print("MIN CUT IS: ", minCutWeight)
             f.close()
 
             # graph_sizes.append(g.num_vertices)
