@@ -43,10 +43,14 @@ class Graph:
             else:
                 self.edges[edge_key2] = edge_weight
 
+        #for k in self.vertices:
+            #self.vertices[k] = (self.vertex_tightness(k), self.vertices[k][1])
+
     def contract(self, u, v):
         newVertex = str(u) + '-' + str(v)
-
+        newVertexValue = self.vertices[u][0] + self.vertices[v][0]
         if (u, v) in self.edges.keys():
+            newVertexValue -= self.edges[u, v]
             del self.edges[u, v]
             self.vertices[u][1].remove(v)
             self.vertices[v][1].remove(u)
@@ -99,11 +103,9 @@ class Graph:
 
 
 class maxHeap:
-
     # Constructor to initialize a heap
     def __init__(self):
         self.Heap = {}
-        self.Size = 0
         self.keyToIndex = {}
 
     def extractHeapify(self, index):
@@ -114,7 +116,7 @@ class maxHeap:
         # if the child is lareger than parent, change indexes
         if left < len(self.Heap) and self.Heap[left][1] > self.Heap[largest][1]:
             largest = left
-        if right < len(self.Heap) and self.Heap[right][1] < self.Heap[largest][1]:
+        if right < len(self.Heap) and self.Heap[right][1] > self.Heap[largest][1]:
             largest = right
         # if the  index has chnaged swap nodes and heapify again
         if largest != index:
@@ -133,6 +135,7 @@ class maxHeap:
         self.Heap[0] = self.Heap[len(self.Heap) - 1]
         self.keyToIndex[self.Heap[0][0]] = 0
         # del self.Heap[len(self.Heap) - 1]
+        #print(self.keyToIndex)
         del self.keyToIndex[root_key]
         del self.Heap[len(self.Heap) - 1]
         # Update heap
@@ -160,10 +163,14 @@ class maxHeap:
         self.insertHeapify(index)
         return
 
-    def increaseKey(self, key):
+    def increaseKey(self, key, newValue):
+
         index = int(self.keyToIndex[key])
+        self.Heap[index] = tuple([key, newValue])
         parent = int(((index - 1) / 2))
-        if self.Heap[index] > self.Heap[parent]:
+        #print("parent: ", parent, "value: ", self.Heap)
+
+        if self.Heap[index][1] > self.Heap[parent][1]:
             self.Heap[index], self.Heap[parent] = self.Heap[parent], self.Heap[index]
             self.keyToIndex[self.Heap[parent][0]] = parent
             self.keyToIndex[self.Heap[index][0]] = index
@@ -180,30 +187,37 @@ class maxHeap:
     def print_Heap(self):
         print("HEAP: ")
         print(self.Heap)
-        print(self.keyToIndex)
+        # print(self.keyToIndex)
 
 
 def stMinCut(G):
+
     Q = maxHeap()
     for key in G.vertices:
-        Q.insert(key, G.vertices[key][0])
+        #Q.insert(key, G.vertices[key][0])
+        Q.insert(key, 0)
+    #Q = G.vertices
+
     s = 'null'
     t = 'null'
     while not Q.isEmpty():
+        #Q.print_Heap()
         u = Q.extractMax()
         s = t
         t = u
+        #print("s t: ", s, t)
         for v in G.vertices[u][1]:
             if Q.isInMaxHeap(v):
-                new_value = list(G.vertices[v])
-                new_value[0] += G.edges[u, v]
-                G.vertices[v] = tuple(new_value)
-                Q.increaseKey(v)
+                new_value = G.vertices[v][0] + G.edges[u, v]
+                G.vertices[v] = (new_value, G.vertices[v][1])
+                Q.increaseKey(v, new_value)
 
+    #print("final s t:", s, t)
     minCut_weight = 0
+    t_weight = 0
     for n in G.vertices[t][1]:
-        minCut_weight += G.edges[t, n]
-    return G, minCut_weight, s, t
+        t_weight += G.edges[t, n]
+    return G, t_weight, s, t
 
 
 def GlobalMinCut(G):
@@ -217,6 +231,7 @@ def GlobalMinCut(G):
         C1, C1_weight, s, t = stMinCut(G)
         G.contract(s, t)
         C2, C2_weight = GlobalMinCut(G)
+
         if C1_weight <= C2_weight:
             return C1, C1_weight
         else:
@@ -245,10 +260,19 @@ if __name__ == '__main__':
             line = f.readline().split()
             edges = f.read().splitlines()
             g = Graph(int(line[0]), int(line[1]), edges)
-            # g.printGraph()
+            #g.printGraph()
             # g.add_edges(edges)
+            '''
+            g.contract('1', '5')
+            g.contract('7', '8')
+            g.contract('4', '7-8')
+            g.contract('3', '4-7-8')
+            g.contract('6', '3-4-7-8')
+            '''
 
             minCut, minCutWeight = GlobalMinCut(g)
+
+            minCut.printGraph()
             print("MIN CUT IS: ", minCutWeight)
             f.close()
 
