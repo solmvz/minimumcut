@@ -1,6 +1,5 @@
 import os
-import copy
-
+import random
 
 class Graph:
     def __init__(self, n_ver, n_edges, edge_list):
@@ -101,6 +100,10 @@ class Graph:
         print(self.vertices)
         print(self.edges)
 
+    def reset(self):
+        for v in self.vertices:
+            self.vertices[v] = (0, self.vertices[v][1])
+        return
 
 class maxHeap:
     # Constructor to initialize a heap
@@ -191,33 +194,26 @@ class maxHeap:
 
 
 def stMinCut(G):
-
+    G.reset()
     Q = maxHeap()
     for key in G.vertices:
-        #Q.insert(key, G.vertices[key][0])
         Q.insert(key, 0)
-    #Q = G.vertices
-
     s = 'null'
     t = 'null'
     while not Q.isEmpty():
-        #Q.print_Heap()
         u = Q.extractMax()
         s = t
         t = u
-        #print("s t: ", s, t)
         for v in G.vertices[u][1]:
             if Q.isInMaxHeap(v):
                 new_value = G.vertices[v][0] + G.edges[u, v]
                 G.vertices[v] = (new_value, G.vertices[v][1])
                 Q.increaseKey(v, new_value)
 
-    #print("final s t:", s, t)
-    minCut_weight = 0
-    t_weight = 0
+    cutOfthePhase = 0
     for n in G.vertices[t][1]:
-        t_weight += G.edges[t, n]
-    return G, t_weight, s, t
+        cutOfthePhase += G.edges[t, n]
+    return cutOfthePhase, s, t
 
 
 def GlobalMinCut(G):
@@ -225,17 +221,16 @@ def GlobalMinCut(G):
         solution = []
         for i in G.vertices:
             solution.append(i)
-        solutionWeight = G.edges[solution[0], solution[1]]
-        return G, solutionWeight
+        cutOfthePhase = G.edges[solution[0], solution[1]]
+        return cutOfthePhase
     else:
-        C1, C1_weight, s, t = stMinCut(G)
+        C1, s, t = stMinCut(G)
         G.contract(s, t)
-        C2, C2_weight = GlobalMinCut(G)
-
-        if C1_weight <= C2_weight:
-            return C1, C1_weight
+        C2 = GlobalMinCut(G)
+        if C1 <= C2:
+            return C1
         else:
-            return C2, C2_weight
+            return C2
 
 
 if __name__ == '__main__':
@@ -260,22 +255,10 @@ if __name__ == '__main__':
             line = f.readline().split()
             edges = f.read().splitlines()
             g = Graph(int(line[0]), int(line[1]), edges)
-            #g.printGraph()
-            # g.add_edges(edges)
-            '''
-            g.contract('1', '5')
-            g.contract('7', '8')
-            g.contract('4', '7-8')
-            g.contract('3', '4-7-8')
-            g.contract('6', '3-4-7-8')
-            '''
 
-            minCut, minCutWeight = GlobalMinCut(g)
+            minCutWeight = GlobalMinCut(g)
 
-            minCut.printGraph()
             print("MIN CUT IS: ", minCutWeight)
+
             f.close()
 
-            # graph_sizes.append(g.num_vertices)
-
-            # stMinCut(g)
