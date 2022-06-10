@@ -241,7 +241,7 @@ if __name__ == '__main__':
     graph_sizes = []
     run_times = []
 
-    f_results = open('results/karger_cuts.txt', 'w+')
+    f_results = open('results/stoer_cuts.txt', 'w+')
     f_results.write('File\tSize of Cut\n')
 
     directory = os.fsencode(dir_name)
@@ -258,7 +258,7 @@ if __name__ == '__main__':
 
             minCutWeight = GlobalMinCut(g)
 
-            print("MIN CUT IS: ", minCutWeight)
+            # print("MIN CUT IS: ", minCutWeight)
 
             f.close()
 

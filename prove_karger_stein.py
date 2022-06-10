@@ -8,99 +8,46 @@ import xlsxwriter
 
 
 class Graph:
-    def __init__(self, n_ver, n_edges, edge_list):
+    def __init__(self, n_ver, n_edges):
         self.num_vertices = n_ver
         self.num_edges = n_edges
-        self.vertices = {}
-        self.edges = {}
-        for v in range(1, n_ver + 1):
-            # new_vertex = Vertex(name=v)
-            # self.vertices.append(new_vertex)
-            self.vertices[str(v)] = (0, [])
-        for vertex in self.vertices:
-            for e in edge_list:
-                edge = e.split()
-                if edge[0] == str(vertex):
-                    # adjVertex = self.findVertex(edge[1])
-                    # vertex.AdjList.append(adjVertex)
-                    self.vertices[vertex][1].append(str(edge[1]))
-                elif edge[1] == str(vertex):
-                    # adjVertex = self.findVertex(edge[0])
-                    # vertex.AdjList.append(adjVertex)
-                    self.vertices[vertex][1].append(str(edge[0]))
+        rows = self.num_vertices + 1
+        self.w_adjacency_matrix = [[0] * rows for _ in range(rows)]
+        self.weighted_degree = [0] * rows
 
-        for e in edge_list:
-            edge = e.split()
-            # edge_key1 = (self.findVertex(edge[0]), self.findVertex(edge[1]))
-            edge_key1 = (edge[0], edge[1])
+    def add_edges(self, list_edges):
+        for i in list_edges:
+            edge = i.split()
+            self.w_adjacency_matrix[int(edge[0])][int(edge[1])] = int(edge[2])
+            self.w_adjacency_matrix[int(edge[1])][int(edge[0])] = int(edge[2])
 
-            edge_weight = int(edge[2])
-            if edge_key1 in self.edges.keys():
-                self.edges[edge_key1] += edge_weight
-            else:
-                self.edges[edge_key1] = edge_weight
+    def build_weighted_degree(self):
+        for vertex in range(self.num_vertices + 1):
+            weight_sum = 0
+            for v in range(self.num_vertices + 1):
+                weight_sum = weight_sum + self.w_adjacency_matrix[vertex][v]
+            self.weighted_degree[vertex] = weight_sum
 
-            # edge_key2 = (self.findVertex(edge[1]), self.findVertex(edge[0]))
-            edge_key2 = (edge[1], edge[0])
-            edge_weight = int(edge[2])
-            if edge_key2 in self.edges.keys():
-                self.edges[edge_key2] += edge_weight
-            else:
-                self.edges[edge_key2] = edge_weight
+    def get_num_vertices(self):
+        verticies = []
+        for vertex in range(self.num_vertices + 1):
+            for v in range(self.num_vertices + 1):
+                if self.w_adjacency_matrix[vertex][v] != 0:
+                    if vertex not in verticies:
+                        verticies.append(vertex)
+                    if v not in verticies:
+                        verticies.append(v)
 
-    def contract(self, u, v):
-        newVertex = str(u) + '-' + str(v)
+        return len(verticies)
 
-        if (u, v) in self.edges.keys():
-            del self.edges[u, v]
-            self.vertices[u][1].remove(v)
-            self.vertices[v][1].remove(u)
+    def get_graph(self):
+        for i in range(self.num_vertices + 1):
+            for j in range(self.num_vertices + 1):
+                if self.w_adjacency_matrix[i][j] != 0:
+                    print(i, ' ', j, ' -> ', self.w_adjacency_matrix[i][j])
 
-        newVertexAdjList = self.vertices[u][1] + self.vertices[v][1]
-        temp_ls1 = list(self.vertices[u])
-        temp_ls1[1] = list(set(self.vertices[u][1]))
-        self.vertices[u] = tuple(temp_ls1)
-        temp_ls2 = list(self.vertices[v])
-        temp_ls1[1] = list(set(self.vertices[v][1]))
-        self.vertices[v] = tuple(temp_ls2)
-
-        for i in self.vertices[u][1]:
-            self.vertices[i][1].remove(u)
-            edge_key1 = (newVertex, i)
-            edge_key2 = (i, newVertex)
-            edge_weight = self.edges[u, i]
-            if edge_key1 in self.edges.keys():
-                self.edges[edge_key1] += edge_weight
-                self.edges[edge_key2] += edge_weight
-            else:
-                self.vertices[i][1].append(newVertex)
-                self.edges[edge_key1] = edge_weight
-                self.edges[edge_key2] = edge_weight
-            del self.edges[u, i]
-            del self.edges[i, u]
-
-        for j in self.vertices[v][1]:
-            self.vertices[j][1].remove(v)
-            edge_key1 = (newVertex, j)
-            edge_key2 = (j, newVertex)
-            edge_weight = self.edges[v, j]
-            if edge_key1 in self.edges.keys():
-                self.edges[edge_key1] += edge_weight
-                self.edges[edge_key2] += edge_weight
-            else:
-                self.vertices[j][1].append(newVertex)
-                self.edges[edge_key1] = edge_weight
-                self.edges[edge_key2] = edge_weight
-            del self.edges[v, j]
-            del self.edges[j, v]
-        self.num_vertices -= 1
-        self.vertices[newVertex] = (0, list(set(newVertexAdjList)))
-        del self.vertices[u]
-        del self.vertices[v]
-
-    def printGraph(self):
-        print(self.vertices)
-        print(self.edges)
+    def get_weighted_degree(self):
+        print(self.weighted_degree)
 
 
 def upper_bound(arr, N, X):
@@ -167,20 +114,33 @@ def edge_select(g):
     return [u, v]
 
 
+def contract_edge(g, u, v):
+    g.weighted_degree[u] = g.weighted_degree[u] + g.weighted_degree[v] - (2 * g.w_adjacency_matrix[u][v])
+    g.weighted_degree[v] = 0
+    g.w_adjacency_matrix[v][u] = 0
+    g.w_adjacency_matrix[u][v] = 0
+    for w in range(g.num_vertices + 1):
+        if w != u and w != v:
+            g.w_adjacency_matrix[u][w] = g.w_adjacency_matrix[u][w] + g.w_adjacency_matrix[v][w]
+            g.w_adjacency_matrix[w][u] = g.w_adjacency_matrix[w][u] + g.w_adjacency_matrix[w][v]
+            g.w_adjacency_matrix[v][w] = 0
+            g.w_adjacency_matrix[w][v] = 0
 
-def full_contraction(g, k):
+
+def contract(g, k):
     n = g.get_num_vertices()
     for i in range(0, n - k):
         [u, v] = edge_select(g)
         # print('edge we about to contract: ', u, '-', v)
-        g.contract(u, v)
+        contract_edge(g, u, v)
+
     return g
 
 
 def recursive_contract(g):
-    n = g.num_vertices
+    n = g.get_num_vertices()
     if n <= 6:
-        new_g = full_contraction(g, 2)
+        new_g = contract(g, 2)
         # new_g.get_graph()
         for i in range(g.num_vertices + 1):
             for j in range(g.num_vertices + 1):
