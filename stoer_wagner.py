@@ -1,5 +1,5 @@
 import os
-import random
+
 
 class Graph:
     def __init__(self, n_ver, n_edges, edge_list):
@@ -104,6 +104,7 @@ class Graph:
         for v in self.vertices:
             self.vertices[v] = (0, self.vertices[v][1])
         return
+
 
 class maxHeap:
     # Constructor to initialize a heap

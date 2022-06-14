@@ -11,6 +11,7 @@ class Graph:
     def __init__(self, n_ver, n_edges):
         self.num_vertices = n_ver
         self.num_edges = n_edges
+        self.V_size = n_ver
         rows = self.num_vertices + 1
         self.w_adjacency_matrix = [[0] * rows for _ in range(rows)]
         self.weighted_degree = [0] * rows
@@ -27,18 +28,6 @@ class Graph:
             for v in range(self.num_vertices + 1):
                 weight_sum = weight_sum + self.w_adjacency_matrix[vertex][v]
             self.weighted_degree[vertex] = weight_sum
-
-    def get_num_vertices(self):
-        verticies = []
-        for vertex in range(self.num_vertices + 1):
-            for v in range(self.num_vertices + 1):
-                if self.w_adjacency_matrix[vertex][v] != 0:
-                    if vertex not in verticies:
-                        verticies.append(vertex)
-                    if v not in verticies:
-                        verticies.append(v)
-
-        return len(verticies)
 
     def get_graph(self):
         for i in range(self.num_vertices + 1):
@@ -125,20 +114,20 @@ def contract_edge(g, u, v):
             g.w_adjacency_matrix[w][u] = g.w_adjacency_matrix[w][u] + g.w_adjacency_matrix[w][v]
             g.w_adjacency_matrix[v][w] = 0
             g.w_adjacency_matrix[w][v] = 0
+    g.V_size -= 1
 
 
 def contract(g, k):
-    n = g.get_num_vertices()
+    n = g.V_size
     for i in range(0, n - k):
         [u, v] = edge_select(g)
         # print('edge we about to contract: ', u, '-', v)
         contract_edge(g, u, v)
-
     return g
 
 
 def recursive_contract(g):
-    n = g.get_num_vertices()
+    n = g.V_size
     if n <= 6:
         new_g = contract(g, 2)
         # new_g.get_graph()
@@ -159,37 +148,29 @@ def recursive_contract(g):
     return min(compare_weights)
 
 
-def karger_stein(g, k):
-    a = g.num_edges + 1
-    step = 1
-    c = 0
+def Karger(G, k):
     minimum = 999999999
-    while a != 0:
-        #print("step: ", step)
-        k_instance = (step*(step**2) * round(math.log(step, 2)))//2
-        #print("k: ", k_instance)
-        for i in range(1, k_instance):
-            t = recursive_contract(g)
-            if t < minimum:
-                minimum = t
-        step += 1
-        a -= 1
+    for i in range(1, k):
+        t = recursive_contract(G)
+        # t = recursive_contract(g)
+        if t < minimum:
+            minimum = t
     return minimum
 
 
 def measure_run_times(g, num_calls, num_instances, k):
     sum_times = 0.0
     for i in range(num_instances):
-        gc.disable()
+        #gc.disable()
         start_time = perf_counter_ns()
-        for i in range(num_calls):
-            result = karger_stein(g, k)
+        for j in range(num_calls):
+            result = Karger(g, k)
         end_time = perf_counter_ns()
         gc.enable()
-        sum_times += (end_time - start_time)/num_calls
-    avg_time = int(round(sum_times/num_instances))
+        sum_times += (end_time - start_time) / num_calls
+    avg_time = int(round(sum_times / num_instances))
     # return average time in nanoseconds
-    return [avg_time, result]
+    return avg_time, result
 
 
 if __name__ == '__main__':
@@ -207,7 +188,7 @@ if __name__ == '__main__':
     for file in sorted(os.listdir(directory)):
         filename = os.fsdecode(file)
 
-        if(filename.endswith('.txt')):
+        if filename.endswith('.txt'):
             print('processing ', filename)
             f = open(dir_name + '/' + filename)
 
@@ -220,13 +201,14 @@ if __name__ == '__main__':
             f.close()
 
             graph_sizes.append(g.num_vertices)
-            k = (g.num_vertices ** 2) * round(math.log(g.num_vertices,2))
+            k = (g.num_vertices ** 2) * round(math.log(g.num_vertices, 2))
+            #result = Karger(g, k)
+            avg_time, result = measure_run_times(g, num_calls, num_instances, k)
+            print(result)
 
-            [avg_time, result] = measure_run_times(g, num_calls, num_instances, k)
 
             run_times.append(avg_time)
             f_results.write(filename + '\t' + str(result) + '\n')
-
     f_results.close()
     with open('results/karger_stein_results.txt', 'w+') as f:
         f.write("Sizes\tTimes\n")
