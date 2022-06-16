@@ -1,5 +1,7 @@
 import os
-
+import gc
+from time import perf_counter_ns
+import random
 
 class Graph:
     def __init__(self, n_ver, n_edges, edge_list):
@@ -104,7 +106,6 @@ class Graph:
         for v in self.vertices:
             self.vertices[v] = (0, self.vertices[v][1])
         return
-
 
 class maxHeap:
     # Constructor to initialize a heap
@@ -234,15 +235,31 @@ def GlobalMinCut(G):
             return C2
 
 
+def measure_run_times(g, num_calls, num_instances):
+    sum_times = 0.0
+    for i in range(num_instances):
+        gc.disable()
+        start_time = perf_counter_ns()
+        for i in range(num_calls):
+            result = GlobalMinCut(g)
+        end_time = perf_counter_ns()
+        gc.enable()
+        sum_times += (end_time - start_time)/num_calls
+    avg_time = int(round(sum_times/num_instances))
+    # return average time in nanoseconds
+    return avg_time, result
+
+
 if __name__ == '__main__':
 
     dir_name = 'dataset'
     num_calls = 1
     num_instances = 1
     graph_sizes = []
+    num_edges = []
     run_times = []
 
-    f_results = open('results/stoer_cuts.txt', 'w+')
+    f_results = open('results/stoer_wagner_cuts.txt', 'w+')
     f_results.write('File\tSize of Cut\n')
 
     directory = os.fsencode(dir_name)
@@ -254,12 +271,22 @@ if __name__ == '__main__':
             f = open(dir_name + '/' + filename)
 
             line = f.readline().split()
+            num_edges.append(line[1])
             edges = f.read().splitlines()
             g = Graph(int(line[0]), int(line[1]), edges)
+            graph_sizes.append(g.num_vertices)
 
-            minCutWeight = GlobalMinCut(g)
+            avg_time,result = measure_run_times(g, num_calls, num_instances)
 
-            # print("MIN CUT IS: ", minCutWeight)
-
+            run_times.append(avg_time)
+            f_results.write(filename + '\t' + str(result) + '\n')
             f.close()
+
+    f_results.close()
+
+    with open('results/stoer_wagner_results.txt', 'w+') as f:
+        f.write("Nodes\tEdges\tTimes\n")
+        for i in range(len(graph_sizes)):
+            f.write("%s\t%s\t%s\n" % (graph_sizes[i], num_edges[i], run_times[i]))
+
 
